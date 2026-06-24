@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowUp, Square, Paperclip, Mic } from 'lucide-react'
+import { ArrowUp, Square } from 'lucide-react'
 
 export function ChatInput({ onSend, disabled, streaming, onStop }) {
   const [value, setValue] = useState('')
   const textareaRef = useRef(null)
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current
     if (!el) return
@@ -19,40 +18,35 @@ export function ChatInput({ onSend, disabled, streaming, onStop }) {
     if (!text || disabled) return
     onSend(text)
     setValue('')
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
   const handleKey = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
   const canSend = value.trim().length > 0 && !disabled
 
   return (
     <div style={{
-      padding: '8px 12px 12px',
-      background: '#fff',
-      borderTop: '1px solid #F1F5F9',
+      padding: '10px 14px 14px',
+      background: 'rgba(255,255,255,0.60)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderTop: '1px solid rgba(102,126,234,0.10)',
     }}>
       <motion.div
         animate={{
           boxShadow: value
-            ? '0 2px 16px rgba(37,99,235,0.10), 0 0 0 1.5px #BFDBFE'
-            : '0 1px 6px rgba(0,0,0,0.06), 0 0 0 1px #E2E8F0',
+            ? '0 4px 24px rgba(102,126,234,0.18), 0 0 0 1.5px rgba(102,126,234,0.35)'
+            : '0 2px 12px rgba(102,126,234,0.08), 0 0 0 1px rgba(102,126,234,0.12)',
         }}
         transition={{ duration: 0.2 }}
         style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          gap: 8,
-          background: '#F8FAFC',
-          borderRadius: 22,
-          padding: '8px 8px 8px 16px',
+          display: 'flex', alignItems: 'flex-end', gap: 8,
+          background: 'rgba(255,255,255,0.88)',
+          borderRadius: 24,
+          padding: '8px 8px 8px 18px',
         }}
       >
         <textarea
@@ -64,37 +58,27 @@ export function ChatInput({ onSend, disabled, streaming, onStop }) {
           rows={1}
           disabled={disabled && !streaming}
           style={{
-            flex: 1,
-            background: 'none',
-            border: 'none',
-            outline: 'none',
-            resize: 'none',
-            fontSize: 15,
-            fontFamily: 'Inter, sans-serif',
-            lineHeight: 1.55,
-            color: '#0F172A',
-            padding: '4px 0',
-            maxHeight: 180,
-            overflowY: 'auto',
-            caretColor: '#2563EB',
+            flex: 1, background: 'none', border: 'none', outline: 'none',
+            resize: 'none', fontSize: 15, fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.55, color: '#1A1040', padding: '6px 0',
+            maxHeight: 180, overflowY: 'auto',
+            caretColor: '#667EEA',
           }}
         />
 
-        {/* Send / Stop button */}
         <AnimatePresence mode="wait">
           {streaming ? (
             <motion.button
               key="stop"
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              whileTap={{ scale: 0.9 }}
+              initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.7, opacity: 0 }}
+              whileTap={{ scale: 0.88 }}
               onClick={onStop}
               style={{
-                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                background: '#FF6800', border: 'none', cursor: 'pointer',
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: 'linear-gradient(135deg, #FF6800, #FF9A3C)',
+                border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(255,104,0,0.35)',
+                boxShadow: '0 4px 14px rgba(255,104,0,0.4)',
               }}
             >
               <Square size={14} fill="#fff" color="#fff" />
@@ -102,19 +86,19 @@ export function ChatInput({ onSend, disabled, streaming, onStop }) {
           ) : (
             <motion.button
               key="send"
-              initial={{ scale: 0.7, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.7, opacity: 0 }}
-              whileTap={{ scale: canSend ? 0.9 : 1 }}
+              initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.7, opacity: 0 }}
+              whileTap={{ scale: canSend ? 0.88 : 1 }}
               onClick={handleSend}
               disabled={!canSend}
               style={{
-                width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
-                background: canSend ? '#2563EB' : '#E2E8F0',
+                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                background: canSend
+                  ? 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)'
+                  : 'rgba(203,213,225,0.6)',
                 border: 'none', cursor: canSend ? 'pointer' : 'default',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.2s, box-shadow 0.2s',
-                boxShadow: canSend ? '0 2px 8px rgba(37,99,235,0.35)' : 'none',
+                transition: 'all 0.2s',
+                boxShadow: canSend ? '0 4px 14px rgba(102,126,234,0.45)' : 'none',
               }}
             >
               <ArrowUp size={18} color={canSend ? '#fff' : '#94A3B8'} strokeWidth={2.5} />
@@ -124,7 +108,8 @@ export function ChatInput({ onSend, disabled, streaming, onStop }) {
       </motion.div>
 
       <p style={{
-        textAlign: 'center', fontSize: 11, color: '#CBD5E1',
+        textAlign: 'center', fontSize: 11,
+        color: 'rgba(102,126,234,0.5)',
         marginTop: 8, lineHeight: 1.4,
       }}>
         MadiOps peut faire des erreurs. Vérifiez les informations importantes.

@@ -119,11 +119,45 @@ export function ChatPage() {
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
-      background: '#fff',
+      background: 'linear-gradient(145deg, #EEF2FF 0%, #F3E8FF 35%, #FCE7F3 70%, #EDE9FE 100%)',
       overflow: 'hidden',
       position: 'relative',
     }}>
+      {/* Orbes de fond permanents */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
+        <motion.div
+          animate={{ y: [0, -18, 0], scale: [1, 1.05, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', top: '-12%', right: '-8%',
+            width: 300, height: 300, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(240,147,251,0.30) 0%, transparent 70%)',
+            filter: 'blur(10px)',
+          }}
+        />
+        <motion.div
+          animate={{ y: [0, 16, 0], scale: [1, 1.04, 1] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          style={{
+            position: 'absolute', bottom: '15%', left: '-10%',
+            width: 250, height: 250, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(102,126,234,0.22) 0%, transparent 70%)',
+            filter: 'blur(12px)',
+          }}
+        />
+        <motion.div
+          animate={{ y: [0, -10, 0], x: [0, 10, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 4 }}
+          style={{
+            position: 'absolute', top: '50%', right: '8%',
+            width: 160, height: 160, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(118,75,162,0.18) 0%, transparent 70%)',
+            filter: 'blur(8px)',
+          }}
+        />
+      </div>
       {/* Sidebar */}
+      <div style={{ position: 'relative', zIndex: 50 }}>
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -136,13 +170,16 @@ export function ChatPage() {
         onArchive={archiveConversation}
         onDelete={handleDeleteConv}
       />
+      </div>
 
       {/* Header */}
+      <div style={{ position: 'relative', zIndex: 10 }}>
       <ChatHeader
         onMenuOpen={() => setSidebarOpen(true)}
         onNewChat={handleNewChat}
         title={activeConv?.title}
       />
+      </div>
 
       {/* Zone de chat */}
       <div style={{
@@ -150,6 +187,7 @@ export function ChatPage() {
         overflowY: 'auto',
         overscrollBehavior: 'contain',
         WebkitOverflowScrolling: 'touch',
+        position: 'relative', zIndex: 1,
       }}>
         {/* Skeleton loading */}
         {loading && (
@@ -193,7 +231,7 @@ export function ChatPage() {
       </div>
 
       {/* Input */}
-      <div style={{ maxWidth: 720, margin: '0 auto', width: '100%' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
         <ChatInput
           onSend={handleSend}
           disabled={streaming}

@@ -10,27 +10,28 @@ export function ChatHeader({ onMenuOpen, onNewChat, title }) {
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '12px 14px',
-        background: '#fff',
-        borderBottom: '1px solid #F1F5F9',
+        background: 'rgba(255,255,255,0.75)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(102,126,234,0.12)',
         zIndex: 10,
         minHeight: 58,
       }}
     >
-      {/* Menu hamburger */}
       <motion.button
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ scale: 0.88 }}
+        whileHover={{ background: 'rgba(102,126,234,0.10)' }}
         onClick={onMenuOpen}
         style={iconBtn}
       >
-        <Menu size={20} color="#374151" />
+        <Menu size={20} color="#667EEA" />
       </motion.button>
 
-      {/* Center: Logo + Title */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <MadiOpsLogo size={28} />
         {title && (
           <span style={{
-            fontSize: 14, fontWeight: 600, color: '#374151',
+            fontSize: 14, fontWeight: 600, color: '#1A1040',
             maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {title}
@@ -38,14 +39,14 @@ export function ChatHeader({ onMenuOpen, onNewChat, title }) {
         )}
       </div>
 
-      {/* New chat */}
       <motion.button
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ scale: 0.88 }}
+        whileHover={{ background: 'rgba(102,126,234,0.10)' }}
         onClick={onNewChat}
         style={iconBtn}
         title="Nouvelle discussion"
       >
-        <Plus size={20} color="#374151" strokeWidth={2.5} />
+        <Plus size={20} color="#667EEA" strokeWidth={2.5} />
       </motion.button>
     </motion.header>
   )
@@ -53,7 +54,9 @@ export function ChatHeader({ onMenuOpen, onNewChat, title }) {
 
 const iconBtn = {
   width: 38, height: 38, borderRadius: 12,
-  background: '#F8FAFC', border: '1px solid #F1F5F9',
+  background: 'rgba(255,255,255,0.7)',
+  border: '1px solid rgba(102,126,234,0.15)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   cursor: 'pointer', flexShrink: 0,
+  transition: 'all 0.15s',
 }

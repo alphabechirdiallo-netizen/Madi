@@ -87,38 +87,38 @@ function UserBubble({ message, onEdit }) {
               rows={Math.min(8, editValue.split('\n').length + 1)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit() } if (e.key === 'Escape') setEditing(false) }}
               style={{
-                width: '100%', border: '1.5px solid #2563EB', borderRadius: 14,
+                width: '100%', border: '1.5px solid #667EEA', borderRadius: 14,
                 padding: '10px 14px', fontSize: 14, fontFamily: 'Inter, sans-serif',
                 lineHeight: 1.55, resize: 'none', outline: 'none',
-                background: '#EFF6FF', color: '#1E3A8A',
+                background: 'rgba(102,126,234,0.06)', color: '#1A1040',
               }}
             />
             <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
               <motion.button whileTap={{ scale: 0.95 }} onClick={() => setEditing(false)}
-                style={{ ...editBtn, background: '#F1F5F9', color: '#64748B' }}>
+                style={{ ...editBtn, background: 'rgba(0,0,0,0.05)', color: '#6B7280' }}>
                 <X size={13} /> Annuler
               </motion.button>
               <motion.button whileTap={{ scale: 0.95 }} onClick={commitEdit}
-                style={{ ...editBtn, background: '#2563EB', color: '#fff' }}>
+                style={{ ...editBtn, background: 'linear-gradient(135deg, #667EEA, #764BA2)', color: '#fff' }}>
                 <Check size={13} /> Envoyer
               </motion.button>
             </div>
           </motion.div>
         ) : (
           <div style={{
-            background: 'var(--user-bubble-bg)',
-            border: '1px solid var(--user-bubble-border)',
+            background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
+            border: 'none',
             borderRadius: '18px 18px 4px 18px',
-            padding: '10px 16px',
+            padding: '11px 17px',
             fontSize: 14, lineHeight: 1.6,
-            color: 'var(--user-bubble-text)',
+            color: '#ffffff',
             fontWeight: 450,
-            boxShadow: '0 1px 3px rgba(37,99,235,0.08)',
+            boxShadow: '0 4px 16px rgba(102,126,234,0.35)',
             whiteSpace: 'pre-wrap', wordBreak: 'break-word',
           }}>
             {message.content}
             {message.is_edited && (
-              <span style={{ fontSize: 11, color: '#93C5FD', marginLeft: 6 }}>(modifié)</span>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', marginLeft: 6 }}>(modifié)</span>
             )}
           </div>
         )}
