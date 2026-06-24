@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- PWA primary -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MadiOps" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
+
+    <!-- Android -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="MadiOps" />
+
+    <!-- SEO & social -->
+    <meta name="description" content="MadiOps — Votre expert IA en conseil d'investissement mondial. Finance, industrie, technologie et bien plus." />
+    <meta name="keywords" content="investissement, finance, conseil, IA, intelligence artificielle, bourse, crypto" />
+    <meta property="og:title" content="MadiOps — IA Conseil d'Investissement" />
+    <meta property="og:description" content="Votre expert IA en conseil d'investissement mondial." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512x512.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-72x72.png" />
+    <link rel="shortcut icon" href="/icon-192x192.png" />
+
+    <title>MadiOps — IA Conseil d'Investissement</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('MadiOps SW registered:', reg.scope))
+            .catch(err => console.warn('SW registration failed:', err))
+        })
+      }
+    </script>
+  </body>
+</html>
