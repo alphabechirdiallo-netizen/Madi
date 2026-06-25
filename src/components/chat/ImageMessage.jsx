@@ -72,16 +72,14 @@ export function ImageMessage({ imageUrl, imagePrompt, caption }) {
   const [lightbox, setLightbox] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
-      const response = await fetch(imageUrl)
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = imageUrl
       a.download = `madiops-${Date.now()}.jpg`
+      document.body.appendChild(a)
       a.click()
-      URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch {
       window.open(imageUrl, '_blank')
     }
