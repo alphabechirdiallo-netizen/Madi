@@ -10,11 +10,11 @@ export function useChat(conversationId, onTitleUpdate) {
   const [streamingReasoning, setStreamingReasoning] = useState('')
   const [streamingAnswer, setStreamingAnswer] = useState('')
   const [isReasoning, setIsReasoning] = useState(false)
+  const [error, setError] = useState(null)
 
   const abortControllerRef = useRef(null)
   const messagesRef = useRef([])
   messagesRef.current = messages
-  // Tracker si le titre a déjà été mis à jour pour cette conversation
   const titleUpdatedRef = useRef({})
 
   const loadMessages = useCallback(async () => {
@@ -32,6 +32,7 @@ export function useChat(conversationId, onTitleUpdate) {
 
   const sendMessage = useCallback(async (text) => {
     if (!session || !conversationId || !text.trim()) return
+    setError(null)
 
     // Annuler tout stream précédent
     if (abortControllerRef.current) {
@@ -55,23 +56,12 @@ export function useChat(conversationId, onTitleUpdate) {
     setStreamingAnswer('')
     setIsReasoning(true)
 
-    // Vérifier si c'est le 1er message de cette conversation
+    // Titre auto dès le 1er message
     const isFirstMessage = messagesRef.current.filter(m => !m.temp).length === 0
-
-    // Générer le titre immédiatement depuis le 1er message utilisateur
     if (isFirstMessage && !titleUpdatedRef.current[conversationId]) {
       titleUpdatedRef.current[conversationId] = true
       const autoTitle = text.trim().slice(0, 60) + (text.trim().length > 60 ? '...' : '')
-      // Mettre à jour l'affichage sidebar immédiatement
       onTitleUpdate?.(conversationId, autoTitle)
-      // Persister en base de données
-      supabase.rpc('rename_conversation', {
-        conv_id: conversationId,
-        new_title: autoTitle,
-      }).then(() => {
-        // Après la réponse de MadiOps, on pourrait affiner le titre
-        // mais le titre du 1er message utilisateur est déjà parfait
-      })
     }
 
     const history = messagesRef.current
@@ -100,7 +90,19 @@ export function useChat(conversationId, onTitleUpdate) {
         signal,
       })
 
-      if (!response.ok) throw new Error('Stream error ' + response.status)
+      // Gérer les erreurs HTTP proprement (503, 502, etc.)
+      if (!response.ok) {
+        let errMsg = 'MadiOps est momentanément indisponible. Réessaie dans quelques secondes.'
+        try {
+          const errData = await response.json()
+          if (errData.error) errMsg = errData.error
+        } catch { /* ignore */ }
+
+        // Retirer le message temp et afficher l'erreur
+        setMessages(prev => prev.filter(m => m.id !== tempId))
+        setError(errMsg)
+        return
+      }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
@@ -130,7 +132,6 @@ export function useChat(conversationId, onTitleUpdate) {
             if (event.type === 'message_id') {
               assistantMsgId = event.id
               userMsgId = event.user_message_id
-
               if (userMsgId) {
                 setMessages(prev => prev.map(m =>
                   m.id === tempId ? { ...m, id: userMsgId, temp: false } : m
@@ -152,16 +153,11 @@ export function useChat(conversationId, onTitleUpdate) {
                 setStreamingReasoning(s => s + event.delta)
                 setIsReasoning(true)
               } else {
-                if (!reasoningDone) {
-                  reasoningDone = true
-                  setIsReasoning(false)
-                }
+                if (!reasoningDone) { reasoningDone = true; setIsReasoning(false) }
                 fullAnswer += event.delta
                 setStreamingAnswer(s => s + event.delta)
                 setMessages(prev => prev.map(m =>
-                  m.id === assistantMsgId
-                    ? { ...m, content: fullAnswer, reasoning: fullReasoning }
-                    : m
+                  m.id === assistantMsgId ? { ...m, content: fullAnswer, reasoning: fullReasoning } : m
                 ))
               }
             }
@@ -179,6 +175,7 @@ export function useChat(conversationId, onTitleUpdate) {
     } catch (err) {
       if (err.name === 'AbortError') return
       setMessages(prev => prev.filter(m => m.id !== tempId))
+      setError('Connexion interrompue. Vérifie ta connexion internet et réessaie.')
       console.error('Chat error:', err)
     } finally {
       setStreaming(false)
@@ -217,18 +214,13 @@ export function useChat(conversationId, onTitleUpdate) {
     setIsReasoning(false)
   }
 
+  const clearError = () => setError(null)
+
   return {
-    messages,
-    loading,
-    streaming,
-    streamingReasoning,
-    streamingAnswer,
-    isReasoning,
-    loadMessages,
-    sendMessage,
-    editMessage,
-    toggleReasoningVisible,
-    stopStreaming,
-    setMessages,
+    messages, loading, streaming,
+    streamingReasoning, streamingAnswer, isReasoning,
+    error, clearError,
+    loadMessages, sendMessage, editMessage,
+    toggleReasoningVisible, stopStreaming, setMessages,
   }
 }

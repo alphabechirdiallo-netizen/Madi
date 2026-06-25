@@ -1,3 +1,4 @@
+import { ImageMessage, ImageGeneratingBubble, parseMessageContent } from './ImageMessage'
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Copy, Pencil, Check, X, MoreHorizontal } from 'lucide-react'
@@ -29,6 +30,18 @@ export function MessageList({ messages, streaming, streamingReasoning, streaming
 
 function MessageBubble({ message, onEdit, onToggleReasoning }) {
   if (message.role === 'user') return <UserBubble message={message} onEdit={onEdit} />
+
+  // Image en cours de génération
+  if (message.isGeneratingImage || message.content === '__GENERATING_IMAGE__') {
+    return <ImageGeneratingBubble />
+  }
+
+  // Message avec image générée
+  const parsed = parseMessageContent(message.content)
+  if (parsed.type === 'image') {
+    return <ImageMessage imageUrl={parsed.imageUrl} imagePrompt={parsed.imagePrompt} caption={parsed.caption} />
+  }
+
   return <AssistantBubble message={message} onToggleReasoning={onToggleReasoning} />
 }
 

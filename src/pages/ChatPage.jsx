@@ -7,10 +7,17 @@ import { WelcomeScreen } from '../components/chat/WelcomeScreen'
 import { Sidebar } from '../components/sidebar/Sidebar'
 import { AuthModal } from '../components/auth/AuthModal'
 import { useAuth } from '../hooks/useAuth'
+import { useImageGen, detectImageRequest } from '../hooks/useImageGen'
 import { useConversations } from '../hooks/useConversations'
 import { useChat } from '../hooks/useChat'
 
 export function ChatPage() {
+  const { generating: generatingImage, generateImage } = useImageGen(
+    activeConvId,
+    handleImageMessages,
+    handleTitleUpdate
+  )
+
   const { user, session } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
@@ -27,6 +34,25 @@ export function ChatPage() {
     updateConversationTitle,
   } = useConversations()
 
+  // Callback pour gérer les messages image (ajout optimiste + remplacement)
+  const handleImageMessages = useCallback((msgs, options = {}) => {
+    if (!msgs) {
+      // Supprimer les messages temp en cas d'erreur
+      if (options.removeTempIds) {
+        setMessages(prev => prev.filter(m => !options.removeTempIds.includes(m.id)))
+      }
+      return
+    }
+    if (options.replaceTempIds) {
+      setMessages(prev => {
+        const filtered = prev.filter(m => !options.replaceTempIds.includes(m.id))
+        return [...filtered, ...msgs]
+      })
+    } else {
+      setMessages(prev => [...prev, ...msgs])
+    }
+  }, [setMessages])
+
   const handleTitleUpdate = useCallback((convId, title) => {
     updateConversationTitle(convId, title)
   }, [updateConversationTitle])
@@ -34,6 +60,7 @@ export function ChatPage() {
   const {
     messages, loading, streaming,
     streamingReasoning, streamingAnswer, isReasoning,
+    error, clearError,
     loadMessages, sendMessage, editMessage,
     toggleReasoningVisible, stopStreaming, setMessages,
   } = useChat(activeConvId, handleTitleUpdate)
@@ -81,7 +108,12 @@ export function ChatPage() {
         await new Promise(r => setTimeout(r, 50))
       }
 
+      // Détecter si c'est une demande d'image
+    if (detectImageRequest(text)) {
+      await generateImage(text)
+    } else {
       await sendMessage(text)
+    }
     } finally {
       isSendingRef.current = false
     }
@@ -234,8 +266,9 @@ export function ChatPage() {
       <div style={{ maxWidth: 720, margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
         <ChatInput
           onSend={handleSend}
-          disabled={streaming}
+          disabled={streaming || generatingImage}
           streaming={streaming}
+          generatingImage={generatingImage}
           onStop={stopStreaming}
         />
       </div>
@@ -243,6 +276,38 @@ export function ChatPage() {
       {/* Auth modal */}
       <AnimatePresence>
         {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      </AnimatePresence>
+
+      {/* Toast erreur */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 60, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 60, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            onClick={clearError}
+            style={{
+              position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)',
+              zIndex: 999, maxWidth: 340, width: 'calc(100% - 32px)',
+              background: 'rgba(239,68,68,0.95)',
+              backdropFilter: 'blur(12px)',
+              borderRadius: 16, padding: '12px 18px',
+              boxShadow: '0 8px 24px rgba(239,68,68,0.30)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+            }}
+          >
+            <div style={{ fontSize: 18 }}>⚠️</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 }}>
+                MadiOps indisponible
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', lineHeight: 1.4 }}>
+                {error} Appuyer pour fermer.
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )
