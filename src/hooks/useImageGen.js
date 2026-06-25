@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase, SUPABASE_URL } from '../lib/supabase'
 import { useAuth } from './useAuth'
 
@@ -33,21 +33,16 @@ export function extractImagePrompt(text) {
 export function useImageGen(conversationId, setMessages, onTitleUpdate) {
   const { session } = useAuth()
   const [generating, setGenerating] = useState(false)
-  const [error, setError] = useState(null)
-  // Garder les IDs temp en ref pour les retrouver même après re-render
-  const tempIdsRef = useRef({ userId: null, assistantId: null })
 
   const generateImage = useCallback(async (userText) => {
     if (!session || !conversationId) return false
     setGenerating(true)
-    setError(null)
 
     const imagePrompt = extractImagePrompt(userText)
     const tempUserId = 'temp-img-user-' + Date.now()
     const tempAssistantId = 'temp-img-assistant-' + Date.now()
-    tempIdsRef.current = { userId: tempUserId, assistantId: tempAssistantId }
 
-    // Ajouter les 2 messages temp directement via setMessages
+    // Ajouter les messages temp — ils RESTENT jusqu'à la fin
     setMessages(prev => [
       ...prev,
       {
@@ -80,19 +75,35 @@ export function useImageGen(conversationId, setMessages, onTitleUpdate) {
         }),
       })
 
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Erreur génération image')
+      let data
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('Réponse invalide du serveur')
       }
 
-      // Remplacer les messages temp par les vrais — via setMessages fonctionnel
+      if (!response.ok || !data.success) {
+        // Remplacer le skeleton par un message d'erreur — ne pas supprimer
+        setMessages(prev => prev.map(m => {
+          if (m.id === tempAssistantId) {
+            return {
+              ...m,
+              content: `❌ Génération impossible : ${data?.error || 'Erreur serveur'}. Vérifie que la clé FAL_API_KEY est bien configurée dans Supabase.`,
+              isGeneratingImage: false,
+              temp: false,
+            }
+          }
+          if (m.id === tempUserId) return { ...m, temp: false }
+          return m
+        }))
+        return false
+      }
+
+      // Succès — remplacer les temp par les vrais messages
       setMessages(prev => {
-        // Retirer les 2 messages temp
         const filtered = prev.filter(m =>
           m.id !== tempUserId && m.id !== tempAssistantId
         )
-        // Ajouter les vrais messages
         return [
           ...filtered,
           {
@@ -106,7 +117,6 @@ export function useImageGen(conversationId, setMessages, onTitleUpdate) {
             role: 'assistant',
             content: `[IMAGE_GENERATED]${data.image_url}[/IMAGE_GENERATED]\n\nVoici l'image générée pour : **${imagePrompt}**`,
             created_at: new Date().toISOString(),
-            isImage: true,
             imageUrl: data.image_url,
             imagePrompt: imagePrompt,
           },
@@ -117,16 +127,24 @@ export function useImageGen(conversationId, setMessages, onTitleUpdate) {
       return true
 
     } catch (err) {
-      setError(err.message)
-      // Retirer les messages temp en cas d'erreur
-      setMessages(prev => prev.filter(m =>
-        m.id !== tempUserId && m.id !== tempAssistantId
-      ))
+      // En cas d'erreur réseau — afficher l'erreur dans le message assistant
+      setMessages(prev => prev.map(m => {
+        if (m.id === tempAssistantId) {
+          return {
+            ...m,
+            content: `❌ Erreur de connexion : ${err.message}. Réessaie dans quelques secondes.`,
+            isGeneratingImage: false,
+            temp: false,
+          }
+        }
+        if (m.id === tempUserId) return { ...m, temp: false }
+        return m
+      }))
       return false
     } finally {
       setGenerating(false)
     }
   }, [session, conversationId, setMessages, onTitleUpdate])
 
-  return { generating, error, generateImage }
+  return { generating, generateImage }
 }
