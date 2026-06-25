@@ -7,23 +7,16 @@ import { WelcomeScreen } from '../components/chat/WelcomeScreen'
 import { Sidebar } from '../components/sidebar/Sidebar'
 import { AuthModal } from '../components/auth/AuthModal'
 import { useAuth } from '../hooks/useAuth'
-import { useImageGen, detectImageRequest } from '../hooks/useImageGen'
 import { useConversations } from '../hooks/useConversations'
 import { useChat } from '../hooks/useChat'
+import { useImageGen, detectImageRequest } from '../hooks/useImageGen'
 
 export function ChatPage() {
-  const { generating: generatingImage, generateImage } = useImageGen(
-    activeConvId,
-    handleImageMessages,
-    handleTitleUpdate
-  )
-
   const { user, session } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
   const [activeConvId, setActiveConvId] = useState(null)
   const messagesEndRef = useRef(null)
-  // Refs pour éviter les race conditions
   const activeConvIdRef = useRef(null)
   const isSendingRef = useRef(false)
 
@@ -34,10 +27,21 @@ export function ChatPage() {
     updateConversationTitle,
   } = useConversations()
 
+  const handleTitleUpdate = useCallback((convId, title) => {
+    updateConversationTitle(convId, title)
+  }, [updateConversationTitle])
+
+  const {
+    messages, loading, streaming,
+    streamingReasoning, streamingAnswer, isReasoning,
+    error, clearError,
+    loadMessages, sendMessage, editMessage,
+    toggleReasoningVisible, stopStreaming, setMessages,
+  } = useChat(activeConvId, handleTitleUpdate)
+
   // Callback pour gérer les messages image (ajout optimiste + remplacement)
   const handleImageMessages = useCallback((msgs, options = {}) => {
     if (!msgs) {
-      // Supprimer les messages temp en cas d'erreur
       if (options.removeTempIds) {
         setMessages(prev => prev.filter(m => !options.removeTempIds.includes(m.id)))
       }
@@ -53,24 +57,18 @@ export function ChatPage() {
     }
   }, [setMessages])
 
-  const handleTitleUpdate = useCallback((convId, title) => {
-    updateConversationTitle(convId, title)
-  }, [updateConversationTitle])
-
-  const {
-    messages, loading, streaming,
-    streamingReasoning, streamingAnswer, isReasoning,
-    error, clearError,
-    loadMessages, sendMessage, editMessage,
-    toggleReasoningVisible, stopStreaming, setMessages,
-  } = useChat(activeConvId, handleTitleUpdate)
+  const { generating: generatingImage, generateImage } = useImageGen(
+    activeConvId,
+    handleImageMessages,
+    handleTitleUpdate
+  )
 
   // Sync ref avec state
   useEffect(() => {
     activeConvIdRef.current = activeConvId
   }, [activeConvId])
 
-  // Charger les messages quand la conversation change
+  // Charger messages quand conversation change
   useEffect(() => {
     if (activeConvId) {
       setMessages([])
@@ -87,16 +85,11 @@ export function ChatPage() {
     || archivedConversations.find(c => c.id === activeConvId)
 
   const handleSend = async (text) => {
-    if (!user || !session) {
-      setShowAuth(true)
-      return
-    }
-    // Empêcher un double-envoi pendant qu'on traite déjà
+    if (!user || !session) { setShowAuth(true); return }
     if (isSendingRef.current) return
     isSendingRef.current = true
 
     try {
-      // Créer une conversation si aucune n'est active
       let convId = activeConvIdRef.current
       if (!convId) {
         const conv = await createConversation()
@@ -104,16 +97,14 @@ export function ChatPage() {
         convId = conv.id
         activeConvIdRef.current = convId
         setActiveConvId(convId)
-        // Laisser le temps au state de se propager avant d'envoyer
         await new Promise(r => setTimeout(r, 50))
       }
 
-      // Détecter si c'est une demande d'image
-    if (detectImageRequest(text)) {
-      await generateImage(text)
-    } else {
-      await sendMessage(text)
-    }
+      if (detectImageRequest(text)) {
+        await generateImage(text)
+      } else {
+        await sendMessage(text)
+      }
     } finally {
       isSendingRef.current = false
     }
@@ -147,15 +138,12 @@ export function ChatPage() {
 
   return (
     <div style={{
-      height: '100dvh',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
+      height: '100dvh', width: '100%',
+      display: 'flex', flexDirection: 'column',
       background: 'linear-gradient(145deg, #EEF2FF 0%, #F3E8FF 35%, #FCE7F3 70%, #EDE9FE 100%)',
-      overflow: 'hidden',
-      position: 'relative',
+      overflow: 'hidden', position: 'relative',
     }}>
-      {/* Orbes de fond permanents */}
+      {/* Orbes de fond */}
       <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
         <motion.div
           animate={{ y: [0, -18, 0], scale: [1, 1.05, 1] }}
@@ -188,35 +176,35 @@ export function ChatPage() {
           }}
         />
       </div>
+
       {/* Sidebar */}
       <div style={{ position: 'relative', zIndex: 50 }}>
-      <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        conversations={conversations}
-        archivedConversations={archivedConversations}
-        activeId={activeConvId}
-        onSelect={handleSelectConv}
-        onCreate={createConversation}
-        onRename={renameConversation}
-        onArchive={archiveConversation}
-        onDelete={handleDeleteConv}
-      />
+        <Sidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          conversations={conversations}
+          archivedConversations={archivedConversations}
+          activeId={activeConvId}
+          onSelect={handleSelectConv}
+          onCreate={createConversation}
+          onRename={renameConversation}
+          onArchive={archiveConversation}
+          onDelete={handleDeleteConv}
+        />
       </div>
 
       {/* Header */}
       <div style={{ position: 'relative', zIndex: 10 }}>
-      <ChatHeader
-        onMenuOpen={() => setSidebarOpen(true)}
-        onNewChat={handleNewChat}
-        title={activeConv?.title}
-      />
+        <ChatHeader
+          onMenuOpen={() => setSidebarOpen(true)}
+          onNewChat={handleNewChat}
+          title={activeConv?.title}
+        />
       </div>
 
       {/* Zone de chat */}
       <div style={{
-        flex: 1,
-        overflowY: 'auto',
+        flex: 1, overflowY: 'auto',
         overscrollBehavior: 'contain',
         WebkitOverflowScrolling: 'touch',
         position: 'relative', zIndex: 1,
@@ -231,7 +219,7 @@ export function ChatPage() {
                 transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.2 }}
                 style={{
                   height: 52, borderRadius: 14,
-                  background: '#F1F5F9', marginBottom: 12,
+                  background: 'rgba(102,126,234,0.08)', marginBottom: 12,
                   width: i === 2 ? '60%' : '100%',
                   marginLeft: i % 2 === 0 ? 'auto' : 0,
                 }}
@@ -297,7 +285,6 @@ export function ChatPage() {
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
             }}
           >
-            <div style={{ fontSize: 18 }}>⚠️</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 2 }}>
                 MadiOps indisponible
