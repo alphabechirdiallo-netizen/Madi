@@ -39,27 +39,10 @@ export function ChatPage() {
     toggleReasoningVisible, stopStreaming, setMessages,
   } = useChat(activeConvId, handleTitleUpdate)
 
-  // Callback pour gérer les messages image (ajout optimiste + remplacement)
-  const handleImageMessages = useCallback((msgs, options = {}) => {
-    if (!msgs) {
-      if (options.removeTempIds) {
-        setMessages(prev => prev.filter(m => !options.removeTempIds.includes(m.id)))
-      }
-      return
-    }
-    if (options.replaceTempIds) {
-      setMessages(prev => {
-        const filtered = prev.filter(m => !options.replaceTempIds.includes(m.id))
-        return [...filtered, ...msgs]
-      })
-    } else {
-      setMessages(prev => [...prev, ...msgs])
-    }
-  }, [setMessages])
-
+  // useImageGen reçoit setMessages directement — plus fiable
   const { generating: generatingImage, generateImage } = useImageGen(
     activeConvId,
-    handleImageMessages,
+    setMessages,
     handleTitleUpdate
   )
 
