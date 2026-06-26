@@ -293,9 +293,10 @@ function AssistantContent({ content, streaming }) {
 
   return (
     <div style={{
-      fontSize: 14.5, lineHeight: 1.7, color: '#0F172A',
+      fontSize: 15, lineHeight: 1.75, color: '#1A1040',
       fontFamily: 'Inter, sans-serif',
       wordBreak: 'break-word',
+      fontWeight: 500,
     }}>
       {rendered}
       {streaming && (
@@ -315,9 +316,9 @@ function AssistantContent({ content, streaming }) {
 
 function formatInline(text) {
   return text
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code style="background:#F1F5F9;padding:1px 5px;border-radius:4px;font-size:13px;color:#2563EB;font-family:monospace">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:900;color:#0F0A2E">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em style="font-style:italic;font-weight:600">$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:rgba(102,126,234,0.10);padding:2px 7px;border-radius:6px;font-size:13px;color:#667EEA;font-family:monospace;font-weight:700">$1</code>')
 }
 
 function ActionBtn({ icon, onClick, title }) {
@@ -341,10 +342,10 @@ function ActionBtn({ icon, onClick, title }) {
   )
 }
 
-const h2Style = { fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '14px 0 6px', lineHeight: 1.3 }
-const h3Style = { fontSize: 16, fontWeight: 700, color: '#0F172A', margin: '12px 0 5px', lineHeight: 1.3 }
-const h4Style = { fontSize: 14, fontWeight: 700, color: '#1E40AF', margin: '10px 0 4px', lineHeight: 1.3 }
-const pStyle = { margin: '2px 0', lineHeight: 1.7 }
-const bulletStyle = { display: 'flex', gap: 10, alignItems: 'flex-start', margin: '4px 0', paddingLeft: 4 }
-const bulletDot = { width: 6, height: 6, borderRadius: '50%', background: '#2563EB', flexShrink: 0, marginTop: 8 }
-const editBtn = { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 10, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer' }
+const h2Style = { fontSize: 20, fontWeight: 900, color: '#0F0A2E', margin: '16px 0 8px', lineHeight: 1.25, letterSpacing: '-0.02em' }
+const h3Style = { fontSize: 17, fontWeight: 800, color: '#0F0A2E', margin: '14px 0 6px', lineHeight: 1.3, letterSpacing: '-0.01em' }
+const h4Style = { fontSize: 15, fontWeight: 800, color: '#667EEA', margin: '12px 0 5px', lineHeight: 1.3 }
+const pStyle = { margin: '4px 0', lineHeight: 1.75, fontWeight: 500, color: '#1A1040' }
+const bulletStyle = { display: 'flex', gap: 10, alignItems: 'flex-start', margin: '6px 0', paddingLeft: 4 }
+const bulletDot = { width: 7, height: 7, borderRadius: '50%', background: 'linear-gradient(135deg, #667EEA, #764BA2)', flexShrink: 0, marginTop: 9 }
+const editBtn = { display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer' }
